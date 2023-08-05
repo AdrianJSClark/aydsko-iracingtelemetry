@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -18,8 +18,12 @@
 
     <PackageReleaseNotes Condition="Exists('$(MSBuildProjectDirectory)/Package Release Notes.txt')">$([System.IO.File]::ReadAllText("$(MSBuildProjectDirectory)/Package Release Notes.txt"))</PackageReleaseNotes>
     <PackageTags>iracing;simracing</PackageTags>
-    <PackageProjectUrl>https://adrianjsclark.github.io/aydsko-iracingdata/</PackageProjectUrl>
-
+    <PackageProjectUrl>https://adrianjsclark.github.io/aydsko-iracingtelemetry/</PackageProjectUrl>
+    <AllowUnsafeBlocks>True</AllowUnsafeBlocks>
   </PropertyGroup>
+
+  <ItemGroup>
+    <InternalsVisibleTo Include="Aydsko.iRacingTelemetry.UnitTests" />
+  </ItemGroup>
 
 </Project>
