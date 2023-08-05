@@ -1,0 +1,45 @@
+﻿<?xml version="1.0" encoding="utf-8"?>
+<Project>
+  <PropertyGroup>
+    <ImplicitUsings>enable</ImplicitUsings>
+    <Nullable>enable</Nullable>
+    <EnforceCodeStyleInBuild>true</EnforceCodeStyleInBuild>
+    <AnalysisLevel>latest-all</AnalysisLevel>
+    <LangVersion>preview</LangVersion>
+  </PropertyGroup>
+
+  <PropertyGroup>
+    <Authors>Adrian Clark</Authors>
+    <Company>Adrian Clark</Company>
+    <Product>Aydsko iRacing Telemetry API</Product>
+    <Title>Aydsko iRacing Telemetry API</Title>
+    <Description>An access library for querying iRacing ".ibt" telemetry files.</Description>
+    <Copyright>© 2024 Adrian Clark. "iRacing" is a trademark of iRacing.com Motorsport Simulations, LLC.</Copyright>
+    <NeutralLanguage>en</NeutralLanguage>
+    <PackageLicenseExpression>MIT</PackageLicenseExpression>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(BUILD_BUILDNUMBER)'!=''">
+    <Version>$(BUILD_BUILDNUMBER)</Version>
+  </PropertyGroup>
+
+  <PropertyGroup Condition="'$(TF_BUILD)' == 'true' Or '$(CI)' == 'true'">
+    <ContinuousIntegrationBuild>true</ContinuousIntegrationBuild>
+  </PropertyGroup>
+
+  <ItemGroup>
+    <AssemblyAttribute Include="System.CLSCompliantAttribute">
+      <_Parameter1>true</_Parameter1>
+      <_Parameter1_IsLiteral>true</_Parameter1_IsLiteral>
+    </AssemblyAttribute>
+  </ItemGroup>
+
+  <PropertyGroup>
+    <!--
+    Ensure that test results are written, especially to be picked up by our automated builds.
+    Source: https://github.com/marketplace/actions/test-reporter#supported-formats
+    -->
+    <VSTestLogger>trx%3bLogFileName=$(MSBuildProjectName).trx</VSTestLogger>
+    <VSTestResultsDirectory>$(MSBuildThisFileDirectory)TestResults\$(TargetFramework)</VSTestResultsDirectory>
+  </PropertyGroup>
+</Project>
