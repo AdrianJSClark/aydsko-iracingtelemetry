@@ -1,13 +1,11 @@
 ﻿using System.Runtime.InteropServices;
 
-namespace Aydsko.iRacingTelemetry;
-
 internal static class IrSdkConstants
 {
     public const int SdkVersion = 2;
     public const int MaxString = 32;
     public const int MaxDesc = 64;
-    public const int MaximumBuffers = 3;
+    public const int MaximumBuffers = 4;
 
     public static readonly int[] TypeBytes = new[]
     {
@@ -20,61 +18,36 @@ internal static class IrSdkConstants
     };
 }
 
-internal enum VarType : int
+[StructLayout(LayoutKind.Sequential)]
+struct irsdk_header
 {
-    Char = 0,
-    Bool,
-    Int,
-    BitField,
-    Float,
-    Double,
-    ETCount // Index, don't use
+    public int ver; // this api header version, see IRSDK_VER
+    public int status; // bitfield using irsdk_StatusField
+    public int tickRate; // ticks per second (60 or 360 etc)
+
+    // session information, updated periodicaly
+    public int sessionInfoUpdate;  // Incremented when session info changes
+    public int sessionInfoLen;     // Length in bytes of session info string
+    public int sessionInfoOffset;  // Session info, encoded in YAML format
+
+    // State data, output at tickRate
+
+    public int numVars;            // length of arra pointed to by varHeaderOffset
+    public int varHeaderOffset;    // offset to irsdk_varHeader[numVars] array, Describes the variables received in varBuf
+
+    public int numBuf;             // <= IRSDK_MAX_BUFS (3 for now)
+    public int bufLen;             // length in bytes for one line
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+    public int[] pad1;             // (16 byte align)
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaximumBuffers)]
+    public irsdk_varBuf[] varBuf;  // buffers of data being written to
 }
 
-internal enum StatusField: int
-{
-    Connected = 1
+[StructLayout(LayoutKind.Sequential)]
+struct irsdk_varBuf
+{ 
+    public int tickCount; // used to detect changes in data
+    public int bufOffset; // offset from header
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
+    public int[] pad; // (16 byte align)
 }
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal unsafe struct VarHeader
-{
-    public int Type;
-    public int Offset;
-    public int Count;
-    public bool CountAsTime;
-    public fixed char Pad[3]; // (16 byte align)
-    public fixed char Name[IrSdkConstants.MaxString];
-    public fixed char Description[IrSdkConstants.MaxString];
-    public fixed char Unit[IrSdkConstants.MaxString];
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal unsafe struct VariableBuffer
-{
-    public int TickCount; // Used to detect changes in data
-    public int BufOffset; // Offset from header
-    public fixed int Pad[2]; // (16 byte align)
-}
-
-[StructLayout(LayoutKind.Sequential, Pack = 1)]
-internal unsafe struct Header
-{
-    public int Version; // This API header version, see IrSdkConstants.SdkVersion
-    public StatusField Status;
-    public int TickRate; // Ticks per second (60 or 360 etc)
-
-    // Session information, updated periodically
-    public int SessionInformationUpdate; // Incremented when the session information changes.
-    public int SessionInformationLength; // Length in bytes of session information string.
-    public int SessionInformationOffset; // Session information, encoded in YAML format.
-
-    // State data, output at TickRate.
-    public int NumberOfVariables; // Length of array pointed to by the HeaderOffset.
-    public int HeaderOffset; // Offset to VarHeader[NumberOfVariables] array, describes the variables received in VariableBuffer.
-    public int NumberOfBuffers; // <= IrSdkConstants.MaximumBuffers
-    public int BufferLength; // Length in bytes for one line.
-    public fixed int Pad[2]; // (16 byte align)
-    public VariableBuffer[] VariableBuffers;
-}
-

@@ -12,10 +12,18 @@ public unsafe class HeaderRead
         using var ibtStream = typeof(HeaderRead).Assembly.GetManifestResourceStream("Aydsko.iRacingTelemetry.UnitTests.mercedesw12_silverstone 2019 gp 2023-08-02 21-44-30.ibt")
                                 ?? throw new Exception("Couldn't find \".ibt\" file bytes.");
 
-        using var ibtReader = new BinaryReader(ibtStream);
+        var data = new byte[(Marshal.SizeOf(typeof(irsdk_header)))];
+        ibtStream.Read(data, 0, data.Length);
 
-        Span<byte> headerBuffer = stackalloc byte[sizeof(Header)];
-        _ = ibtReader.Read(headerBuffer);
-        var header = MemoryMarshal.Read<Header>(headerBuffer);
+        var headerHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
+
+        try
+        {
+            var header = Marshal.PtrToStructure<irsdk_header>(headerHandle.AddrOfPinnedObject());
+        }
+        finally
+        {
+            headerHandle.Free();
+        }
     }
 }
