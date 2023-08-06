@@ -86,14 +86,21 @@ public class DiskClient : IDisposable
             var line = new List<Variable>(_header.numVars);
             foreach (var headerVar in _headerVariables)
             {
-                Variable headerVariable = headerVar.type switch
+                Variable headerVariable = (headerVar.type, headerVar.count, CreateString(headerVar.unit)) switch
                 {
-                    0 => new VariableChar(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
-                    1 => new VariableBool(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
-                    2 => new VariableInt(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    3 => new VariableBitField(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    4 => new VariableFloat(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    5 => new VariableDouble(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span).ToArray()),
+                    (0, 1, _) => new Variable<char>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span)[0]),
+                    (1, 1, _) => new Variable<bool>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span)[0]),
+                    //(2, 1, "irsdk_TrkSurf") => new Variable<>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
+                    (2, 1, _) => new Variable<int>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
+                    (3, 1, _) => new Variable<int>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
+                    (4, 1, _) => new Variable<float>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
+                    (5, 1, _) => new Variable<double>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span)[0]),
+                    (0, >1, _) => new Variable<char[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    (1, >1, _) => new Variable<bool[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    (2, >1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (3, >1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (4, >1, _) => new Variable<float[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (5, >1, _) => new Variable<double[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span).ToArray()),
                     _ => throw new InvalidDataException("Unexpected header variable type value: " + headerVar.type)
                 };
 
