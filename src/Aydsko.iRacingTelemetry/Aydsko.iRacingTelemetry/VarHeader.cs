@@ -51,3 +51,21 @@ struct irsdk_varBuf
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 2)]
     public int[] pad; // (16 byte align)
 }
+
+[StructLayout(LayoutKind.Sequential)]
+struct irsdk_varHeader
+{
+    public int type; // irsdk_VarType
+    public int offset; // offset from start of buffer row
+    public int count; // number of entries (array), so length in bytes would be "irdskVarTypeBytes[type] * count"
+
+    public bool countAsTime;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
+    public int[] pad;             // (16 byte align)
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
+    public char[] name;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxDesc)]
+    public char[] desc;
+    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
+    public char[] unit;
+}

@@ -1,29 +1,16 @@
-﻿using System.IO.MemoryMappedFiles;
-using System.Reflection.PortableExecutable;
-using System.Runtime.InteropServices;
+﻿namespace Aydsko.iRacingTelemetry.UnitTests;
 
-namespace Aydsko.iRacingTelemetry.UnitTests;
-
-public unsafe class HeaderRead
+public class HeaderRead
 {
     [Test]
-    public void Test()
+    public async Task Test()
     {
-        using var ibtStream = typeof(HeaderRead).Assembly.GetManifestResourceStream("Aydsko.iRacingTelemetry.UnitTests.mercedesw12_silverstone 2019 gp 2023-08-02 21-44-30.ibt")
-                                ?? throw new Exception("Couldn't find \".ibt\" file bytes.");
+        var testFilePath = Path.Combine(Environment.CurrentDirectory, "mercedesw12_silverstone 2019 gp 2023-08-02 21-44-30.ibt");
+        var testFileExists = File.Exists(testFilePath);
+        Assert.That(testFileExists, Is.True, "Test file does not exist.");
 
-        var data = new byte[(Marshal.SizeOf(typeof(irsdk_header)))];
-        ibtStream.Read(data, 0, data.Length);
+        using var diskClient = await DiskClient.OpenFileAsync(testFilePath).ConfigureAwait(false);
 
-        var headerHandle = GCHandle.Alloc(data, GCHandleType.Pinned);
-
-        try
-        {
-            var header = Marshal.PtrToStructure<irsdk_header>(headerHandle.AddrOfPinnedObject());
-        }
-        finally
-        {
-            headerHandle.Free();
-        }
+        Assert.That(diskClient.SessionInfoYaml, Is.Not.Null.Or.Empty);
     }
 }
