@@ -59,9 +59,10 @@ struct irsdk_varHeader
     public int offset; // offset from start of buffer row
     public int count; // number of entries (array), so length in bytes would be "irdskVarTypeBytes[type] * count"
 
+    [MarshalAs(UnmanagedType.I1)]
     public bool countAsTime;
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = 3)]
-    public int[] pad;             // (16 byte align)
+    public char[] pad;             // (16 byte align)
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
     public char[] name;
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxDesc)]

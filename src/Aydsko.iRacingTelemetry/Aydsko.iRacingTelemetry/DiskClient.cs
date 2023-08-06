@@ -1,4 +1,6 @@
-﻿using System.Reflection.PortableExecutable;
+﻿using System.Collections;
+using System.Reflection.PortableExecutable;
+using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -9,10 +11,10 @@ public class DiskClient : IDisposable
     private readonly string ibtPath;
     private bool disposedValue;
     private FileStream? _ibtFile;
-    private string? _sessionInfoYaml;
-    private List<irsdk_varHeader>? _headerVars;
+    private irsdk_header _header;
+    private List<irsdk_varHeader>? _headerVariables;
 
-    public string? SessionInfoYaml { get => _sessionInfoYaml; }
+    public string? SessionInfoYaml { get; private set; }
 
     public static async Task<DiskClient> OpenFileAsync(string ibtPath, CancellationToken cancellationToken = default)
     {
@@ -35,31 +37,83 @@ public class DiskClient : IDisposable
     {
         _ibtFile = File.OpenRead(ibtPath);
 
-        var header = await ReadFromStreamAsync<irsdk_header>(_ibtFile, cancellationToken).ConfigureAwait(false);
+        _header = await ReadFromStreamAsync<irsdk_header>(_ibtFile, cancellationToken).ConfigureAwait(false);
 
-        if (header.sessionInfoLen == 0)
+        if (_header.sessionInfoLen == 0)
         {
 #pragma warning disable CA2201 // Do not raise reserved exception types
             throw new Exception("Unsure of file format. Session information length \"0\" in header.");
 #pragma warning restore CA2201 // Do not raise reserved exception types
         }
 
-        _sessionInfoYaml = await ReadUtf8StringFromStreamAsync(_ibtFile, header.sessionInfoOffset, header.sessionInfoLen, cancellationToken).ConfigureAwait(false);
+        SessionInfoYaml = await ReadUtf8StringFromStreamAsync(_ibtFile, _header.sessionInfoOffset, _header.sessionInfoLen, cancellationToken).ConfigureAwait(false);
 
-        if (header.numVars > 0)
+        if (_header.numVars > 0)
         {
-            _headerVars = new();
-            _ibtFile.Seek(header.varHeaderOffset, SeekOrigin.Begin);
+            _headerVariables = new(_header.numVars);
             var headerSize = Marshal.SizeOf(typeof(irsdk_varHeader));
 
-            for (long offset = header.varHeaderOffset; offset < header.varHeaderOffset + (header.numVars * headerSize); offset += headerSize)
+            _ = _ibtFile.Seek(_header.varHeaderOffset, SeekOrigin.Begin);
+
+            Memory<byte> headerVarBytes = new byte[_header.numVars * headerSize];
+            _ = await _ibtFile.ReadAsync(headerVarBytes, cancellationToken).ConfigureAwait(false);
+
+            for (var offset = 0; offset < headerVarBytes.Length; offset += headerSize)
             {
-                var headerVar = await ReadFromStreamAsync<irsdk_varHeader>(_ibtFile, cancellationToken).ConfigureAwait(false);
-                _headerVars.Add(headerVar);
+                var headerVar = CreateFromSpan<irsdk_varHeader>(headerVarBytes.Slice(offset, headerSize).Span);
+                _headerVariables.Add(headerVar);
             }
         }
     }
 
+    public async IAsyncEnumerable<Variable[]> ReadVariableLinesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (_ibtFile is null)
+        {
+            throw new InvalidOperationException("Unexpected null value for the \".ibt\" file.");
+        }
+
+        if (_headerVariables is null or { Count: 0 })
+        {
+            yield break;
+        }
+
+        _ = _ibtFile.Seek(_header.varBuf[0].bufOffset, SeekOrigin.Begin);
+
+        Memory<byte> valueBuffer = new byte[_header.bufLen];
+        while((await _ibtFile.ReadAsync(valueBuffer, cancellationToken).ConfigureAwait(false)) == _header.bufLen)
+        {
+            var line = new List<Variable>(_header.numVars);
+            foreach (var headerVar in _headerVariables)
+            {
+                Variable headerVariable = headerVar.type switch
+                {
+                    0 => new VariableChar(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    1 => new VariableBool(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    2 => new VariableInt(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    3 => new VariableBitField(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    4 => new VariableFloat(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    5 => new VariableDouble(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span).ToArray()),
+                    _ => throw new InvalidDataException("Unexpected header variable type value: " + headerVar.type)
+                };
+
+                line.Add(headerVariable);
+            }
+
+            yield return line.ToArray();
+        }
+    }
+
+    private static string? CreateString(char[] chars)
+    {
+        if (chars is null or { Length: 0 } || chars[0] == '\0')
+        {
+            return null;
+        }
+
+        var value = new string(chars);
+        return value.TrimEnd('\0');
+    }
 
     private static async Task<T> ReadFromStreamAsync<T>(FileStream stream, CancellationToken cancellation) where T : struct
     {
@@ -82,11 +136,24 @@ public class DiskClient : IDisposable
 #pragma warning restore CA2201 // Do not raise reserved exception types
     }
 
-    private static async Task<string> ReadUtf8StringFromStreamAsync(FileStream stream, long fromOffset,  long length, CancellationToken cancellation)
+    private static T? CreateFromSpan<T>(Span<byte> span)
+    {
+        var handle = GCHandle.Alloc(span.ToArray(), GCHandleType.Pinned);
+        try
+        {
+            return Marshal.PtrToStructure<T>(handle.AddrOfPinnedObject());
+        }
+        finally
+        {
+            handle.Free();
+        }
+    }
+
+    private static async Task<string> ReadUtf8StringFromStreamAsync(FileStream stream, long fromOffset, long length, CancellationToken cancellation)
     {
         ArgumentNullException.ThrowIfNull(nameof(stream));
-        
-        if(!stream.CanSeek)
+
+        if (!stream.CanSeek)
         {
             throw new ArgumentException("Must be able to seek the given stream.", nameof(stream));
         }

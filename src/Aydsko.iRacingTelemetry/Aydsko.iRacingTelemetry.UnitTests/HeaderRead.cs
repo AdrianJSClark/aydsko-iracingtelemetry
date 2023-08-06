@@ -11,6 +11,8 @@ public class HeaderRead
 
         using var diskClient = await DiskClient.OpenFileAsync(testFilePath).ConfigureAwait(false);
 
+        var singleLine = await diskClient.ReadVariableLinesAsync().FirstAsync().ConfigureAwait(false);
+
         Assert.That(diskClient.SessionInfoYaml, Is.Not.Null.Or.Empty);
     }
 }
