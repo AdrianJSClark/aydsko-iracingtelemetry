@@ -19,7 +19,7 @@ internal static class IrSdkConstants
 }
 
 [StructLayout(LayoutKind.Sequential)]
-struct irsdk_header
+internal struct irsdk_header
 {
     public int ver; // this api header version, see IRSDK_VER
     public int status; // bitfield using irsdk_StatusField
@@ -44,7 +44,7 @@ struct irsdk_header
 }
 
 [StructLayout(LayoutKind.Sequential)]
-struct irsdk_varBuf
+internal struct irsdk_varBuf
 { 
     public int tickCount; // used to detect changes in data
     public int bufOffset; // offset from header
@@ -53,7 +53,7 @@ struct irsdk_varBuf
 }
 
 [StructLayout(LayoutKind.Sequential)]
-struct irsdk_varHeader
+internal struct irsdk_varHeader
 {
     public int type; // irsdk_VarType
     public int offset; // offset from start of buffer row
@@ -69,4 +69,14 @@ struct irsdk_varHeader
     public char[] desc;
     [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
     public char[] unit;
+}
+
+[StructLayout(LayoutKind.Sequential)]
+internal struct irsdk_diskSubHeader
+{
+    public long sessionStartDate;
+    public double sessionStartTime;
+    public double sessionEndTime;
+    public int sessionLapCount;
+    public int sessionRecordCount;
 }

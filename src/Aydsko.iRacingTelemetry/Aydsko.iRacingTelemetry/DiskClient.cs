@@ -1,6 +1,4 @@
-﻿using System.Collections;
-using System.Reflection.PortableExecutable;
-using System.Runtime.CompilerServices;
+﻿using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -12,9 +10,28 @@ public class DiskClient : IDisposable
     private bool disposedValue;
     private FileStream? _ibtFile;
     private irsdk_header _header;
+    private irsdk_diskSubHeader _diskSubHeader;
+    private DiskSubHeader? _diskSubHeaderValue;
     private List<irsdk_varHeader>? _headerVariables;
 
     public string? SessionInfoYaml { get; private set; }
+
+    public DiskSubHeader DiskSubHeader
+    {
+        get
+        {
+            if (_diskSubHeaderValue is null)
+            {
+                var epoch = new DateTimeOffset(1970, 1, 1, 0, 0, 0, TimeSpan.Zero);
+                _diskSubHeaderValue = new(epoch.AddSeconds(_diskSubHeader.sessionStartDate),
+                                          _diskSubHeader.sessionStartTime,
+                                          _diskSubHeader.sessionEndTime,
+                                          _diskSubHeader.sessionLapCount,
+                                          _diskSubHeader.sessionRecordCount);
+            }
+            return _diskSubHeaderValue;
+        }
+    }
 
     public static async Task<DiskClient> OpenFileAsync(string ibtPath, CancellationToken cancellationToken = default)
     {
@@ -38,6 +55,7 @@ public class DiskClient : IDisposable
         _ibtFile = File.OpenRead(ibtPath);
 
         _header = await ReadFromStreamAsync<irsdk_header>(_ibtFile, cancellationToken).ConfigureAwait(false);
+        _diskSubHeader = await ReadFromStreamAsync<irsdk_diskSubHeader>(_ibtFile, cancellationToken).ConfigureAwait(!false);
 
         if (_header.sessionInfoLen == 0)
         {
@@ -81,7 +99,7 @@ public class DiskClient : IDisposable
         _ = _ibtFile.Seek(_header.varBuf[0].bufOffset, SeekOrigin.Begin);
 
         Memory<byte> valueBuffer = new byte[_header.bufLen];
-        while((await _ibtFile.ReadAsync(valueBuffer, cancellationToken).ConfigureAwait(false)) == _header.bufLen)
+        while ((await _ibtFile.ReadAsync(valueBuffer, cancellationToken).ConfigureAwait(false)) == _header.bufLen)
         {
             var line = new List<Variable>(_header.numVars);
             foreach (var headerVar in _headerVariables)
@@ -103,12 +121,12 @@ public class DiskClient : IDisposable
                     (3, 1, _) => new Variable<int>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
                     (4, 1, _) => new Variable<float>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span)[0]),
                     (5, 1, _) => new Variable<double>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span)[0]),
-                    (0, >1, _) => new Variable<char[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
-                    (1, >1, _) => new Variable<bool[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
-                    (2, >1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    (3, >1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    (4, >1, _) => new Variable<float[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
-                    (5, >1, _) => new Variable<double[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span).ToArray()),
+                    (0, > 1, _) => new Variable<char[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, char>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    (1, > 1, _) => new Variable<bool[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, bool>(valueBuffer.Slice(headerVar.offset, headerVar.count * 1).Span).ToArray()),
+                    (2, > 1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (3, > 1, _) => new Variable<int[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, int>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (4, > 1, _) => new Variable<float[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, float>(valueBuffer.Slice(headerVar.offset, headerVar.count * 4).Span).ToArray()),
+                    (5, > 1, _) => new Variable<double[]>(CreateString(headerVar.name), CreateString(headerVar.desc), CreateString(headerVar.unit), MemoryMarshal.Cast<byte, double>(valueBuffer.Slice(headerVar.offset, headerVar.count * 8).Span).ToArray()),
                     _ => throw new InvalidDataException("Unexpected header variable type value: " + headerVar.type)
                 };
 
