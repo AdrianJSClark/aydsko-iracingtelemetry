@@ -1,8 +1,8 @@
-﻿using System.Runtime.InteropServices;
+﻿using System.Security;
 
 namespace Aydsko.iRacingTelemetry;
 
-internal static class YamlParser
+public static class YamlParser
 {
     public static IReadOnlyDictionary<string, string?> Parse(string yaml)
     {
@@ -11,59 +11,112 @@ internal static class YamlParser
         return result;
     }
 
-    public static IReadOnlyDictionary<string, string?> Parse(ReadOnlyMemory<char> yamlChars)
+    public static IEnumerable<YamlToken> Tokenize(ReadOnlyMemory<char> input)
     {
-        var result = new Dictionary<string, string>();
-        var keyStartIndex = 0;
-        var valueStartIndex = -1;
+        var results = new List<YamlToken>();
+        var start = 0;
+        var end = 0;
+        var current = YamlTokenType.Unknown;
 
-        string? key = null;
-
-        var index = -1;
-        foreach (var yamlChar in yamlChars.Span)
+        foreach (var c in input.Span)
         {
-            index++;
-            switch (yamlChar)
+            switch (c)
             {
+                case '\r':
+                case '\n':
+                    if (current != YamlTokenType.NewLine && current != YamlTokenType.Unknown)
+                    {
+                        results.Add(new(start, end - start, current));
+                        start = end;
+                    }
+                    current = YamlTokenType.NewLine;
+                    end++;
+                    continue;
+
+                case ':' when (current == YamlTokenType.QuotedString):
+                    end++;
+                    continue;
+
                 case ':':
-                    key = new string(yamlChars.Slice(keyStartIndex, index - keyStartIndex).Span);
-                    keyStartIndex = -1;
-                    valueStartIndex = index + 1;
-                    break;
-                case '\r' or '\n':
-                    result.Add(key, new string(yamlChars.Slice(valueStartIndex, index - valueStartIndex).Span));
-                    valueStartIndex = -1;
-                    key = null;
-                    break;
+                    results.Add(new(start, end - start, YamlTokenType.Literal));
+                    start = end;
+                    end++;
+                    results.Add(new(start, end - start, YamlTokenType.KeySeparator));
+                    start = end;
+                    current = YamlTokenType.Unknown;
+                    continue;
+
+                case '\'' when (current == YamlTokenType.QuotedString || current == YamlTokenType.Whitespace):
+                case '\"' when (current == YamlTokenType.QuotedString || current == YamlTokenType.Whitespace):
+                    results.Add(new(start, end - start, current));
+                    start = end;
+                    end++;
+                    results.Add(new(start, end - start, YamlTokenType.Quote));
+                    start = end;
+                    current = current == YamlTokenType.QuotedString ? YamlTokenType.Unknown : YamlTokenType.QuotedString;
+                    continue;
+
+                case '\'':
+                case '\"':
+                    start = end;
+                    end++;
+                    results.Add(new(start, end - start, YamlTokenType.Quote));
+                    current = YamlTokenType.QuotedString;
+                    continue;
+
+                case ' ' when (current == YamlTokenType.Whitespace || current == YamlTokenType.QuotedString):
+                    end++;
+                    continue;
+
+                case ' ' when (current == YamlTokenType.NewLine):
+                    results.Add(new(start, end - start, current));
+                    start = end;
+                    end++;
+                    current = YamlTokenType.Whitespace;
+                    continue;
+
+                case ' ':
+                    start = end;
+                    end++;
+                    current = YamlTokenType.Whitespace;
+                    continue;
+
+                default:
+                    if (current == YamlTokenType.Unknown)
+                    {
+                        current = YamlTokenType.Literal;
+                    }
+
+                    if (current == YamlTokenType.Whitespace || current == YamlTokenType.NewLine)
+                    {
+                        results.Add(new(start, end - start, current));
+                        start = end;
+                        current = YamlTokenType.Literal;
+                    }
+
+                    end++;
+                    continue;
             }
         }
 
-        if (valueStartIndex != -1)
+        if (results.Last() is YamlToken lastToken && lastToken.Start + lastToken.Length != input.Length)
         {
-            result.Add(key, new string(yamlChars.Slice(valueStartIndex, index - valueStartIndex).Span));
-            valueStartIndex = -1;
-            key = null;
+            results.Add(new(start, end - start, current));
         }
 
-        return result;
+        return results;
     }
 
-    private enum YamlTokenType
+    public record YamlToken(int Start, int Length, YamlTokenType TokenType);
+
+    public enum YamlTokenType
     {
         Unknown,
-        Key,
+        Literal,
         KeySeparator,
-        Value,
         Whitespace,
-    }
-
-    private enum ParseState
-    {
-        None,
-        Space,
-        Key,
-        KeySep,
-        Value,
-        NewLine
+        Quote,
+        QuotedString,
+        NewLine,
     }
 }
