@@ -1,6 +1,4 @@
-﻿using System.Security;
-
-namespace Aydsko.iRacingTelemetry;
+﻿namespace Aydsko.iRacingTelemetry;
 
 public static class YamlParser
 {
@@ -17,6 +15,7 @@ public static class YamlParser
         var start = 0;
         var end = 0;
         var current = YamlTokenType.Unknown;
+        var keySeparatorSeen = false;
 
         foreach (var c in input.Span)
         {
@@ -24,16 +23,17 @@ public static class YamlParser
             {
                 case '\r':
                 case '\n':
-                    if (current != YamlTokenType.NewLine && current != YamlTokenType.Unknown)
+                    if (current is not YamlTokenType.NewLine and not YamlTokenType.Unknown)
                     {
                         results.Add(new(start, end - start, current));
                         start = end;
                     }
                     current = YamlTokenType.NewLine;
                     end++;
+                    keySeparatorSeen = false;
                     continue;
 
-                case ':' when (current == YamlTokenType.QuotedString):
+                case ':' when current == YamlTokenType.QuotedString:
                     end++;
                     continue;
 
@@ -42,10 +42,11 @@ public static class YamlParser
                     start = end;
                     end++;
                     current = YamlTokenType.KeySeparator;
+                    keySeparatorSeen = true;
                     continue;
 
-                case '\'' when (current == YamlTokenType.QuotedString):
-                case '\"' when (current == YamlTokenType.QuotedString):
+                case '\'' when current == YamlTokenType.QuotedString:
+                case '\"' when current == YamlTokenType.QuotedString:
                     results.Add(new(start, end - start, current));
                     start = end;
                     end++;
@@ -60,19 +61,20 @@ public static class YamlParser
                     current = YamlTokenType.StartQuote;
                     continue;
 
-                case ' ' when (current == YamlTokenType.Whitespace || current == YamlTokenType.QuotedString):
+                case ' ' when current is YamlTokenType.Whitespace or YamlTokenType.QuotedString or YamlTokenType.Value:
                     end++;
                     continue;
 
-                case ' ' when (current == YamlTokenType.NewLine || current == YamlTokenType.ListBullet):
+                case ' ' when current is YamlTokenType.NewLine or YamlTokenType.ListBullet:
                     results.Add(new(start, end - start, current));
                     start = end;
                     end++;
+                    keySeparatorSeen = current == YamlTokenType.ListBullet;
                     current = YamlTokenType.Whitespace;
                     continue;
 
                 case ' ':
-                    if (current != YamlTokenType.Whitespace && current != YamlTokenType.Unknown)
+                    if (current is not YamlTokenType.Whitespace and not YamlTokenType.Unknown)
                     {
                         results.Add(new(start, end - start, current));
                         start = end;
@@ -81,7 +83,7 @@ public static class YamlParser
                     end++;
                     continue;
 
-                case '-' when (current == YamlTokenType.Whitespace || current == YamlTokenType.NewLine):
+                case '-' when keySeparatorSeen == false && (current == YamlTokenType.Whitespace || current == YamlTokenType.NewLine):
                     results.Add(new(start, end - start, current));
                     start = end;
                     end++;
@@ -103,13 +105,19 @@ public static class YamlParser
                     }
                     else if (current == YamlTokenType.Unknown)
                     {
-                        current = YamlTokenType.Literal;
+                        current = YamlTokenType.Key;
                     }
-                    else if (current == YamlTokenType.Whitespace || current == YamlTokenType.NewLine || current == YamlTokenType.KeySeparator)
+                    else if (current == YamlTokenType.KeySeparator)
                     {
                         results.Add(new(start, end - start, current));
                         start = end;
-                        current = YamlTokenType.Literal;
+                        current = YamlTokenType.Value;
+                    }
+                    else if (current is YamlTokenType.Whitespace or YamlTokenType.NewLine)
+                    {
+                        results.Add(new(start, end - start, current));
+                        start = end;
+                        current = keySeparatorSeen ? YamlTokenType.Value : YamlTokenType.Key;
                     }
 
                     end++;
@@ -130,9 +138,10 @@ public static class YamlParser
     public enum YamlTokenType
     {
         Unknown,
-        Literal,
+        Key,
         KeySeparator,
         Whitespace,
+        Value,
         StartQuote,
         QuotedString,
         EndQuote,
