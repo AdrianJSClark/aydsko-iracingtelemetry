@@ -1,17 +1,12 @@
-﻿namespace Aydsko.iRacingTelemetry;
+﻿using Aydsko.iRacingTelemetry.Yaml;
+
+namespace Aydsko.iRacingTelemetry;
 
 public static class YamlParser
 {
-    public static IReadOnlyDictionary<string, string?> Parse(string yaml)
+    public static IEnumerable<Token> Tokenize(ReadOnlyMemory<char> input)
     {
-        var deserializer = new YamlDotNet.Serialization.Deserializer();
-        var result = deserializer.Deserialize<Dictionary<string, string?>>(yaml);
-        return result;
-    }
-
-    public static IEnumerable<YamlToken> Tokenize(ReadOnlyMemory<char> input)
-    {
-        var results = new List<YamlToken>();
+        var results = new List<Token>();
         var start = 0;
         var end = 0;
         var current = YamlTokenType.Unknown;
@@ -25,7 +20,7 @@ public static class YamlParser
                 case '\n':
                     if (current is not YamlTokenType.NewLine and not YamlTokenType.Unknown)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                     }
                     current = YamlTokenType.NewLine;
@@ -38,7 +33,7 @@ public static class YamlParser
                     continue;
 
                 case ':':
-                    results.Add(new(start, end - start, current));
+                    results.Add(CreateToken(start, end - start, current));
                     start = end;
                     end++;
                     current = YamlTokenType.KeySeparator;
@@ -47,7 +42,7 @@ public static class YamlParser
 
                 case '\'' when current == YamlTokenType.QuotedString:
                 case '\"' when current == YamlTokenType.QuotedString:
-                    results.Add(new(start, end - start, current));
+                    results.Add(CreateToken(start, end - start, current));
                     start = end;
                     end++;
                     current = YamlTokenType.EndQuote;
@@ -55,7 +50,7 @@ public static class YamlParser
 
                 case '\'':
                 case '\"':
-                    results.Add(new(start, end - start, current));
+                    results.Add(CreateToken(start, end - start, current));
                     start = end;
                     end++;
                     current = YamlTokenType.StartQuote;
@@ -66,7 +61,7 @@ public static class YamlParser
                     continue;
 
                 case ' ' when current is YamlTokenType.NewLine or YamlTokenType.ListBullet:
-                    results.Add(new(start, end - start, current));
+                    results.Add(CreateToken(start, end - start, current));
                     start = end;
                     end++;
                     keySeparatorSeen = current == YamlTokenType.ListBullet;
@@ -76,7 +71,7 @@ public static class YamlParser
                 case ' ':
                     if (current is not YamlTokenType.Whitespace and not YamlTokenType.Unknown)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                     }
                     current = YamlTokenType.Whitespace;
@@ -84,7 +79,7 @@ public static class YamlParser
                     continue;
 
                 case '-' when keySeparatorSeen == false && (current == YamlTokenType.Whitespace || current == YamlTokenType.NewLine):
-                    results.Add(new(start, end - start, current));
+                    results.Add(CreateToken(start, end - start, current));
                     start = end;
                     end++;
                     current = YamlTokenType.ListBullet;
@@ -93,13 +88,13 @@ public static class YamlParser
                 default:
                     if (current == YamlTokenType.StartQuote)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                         current = YamlTokenType.QuotedString;
                     }
                     else if (current == YamlTokenType.EndQuote)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                         current = YamlTokenType.Unknown;
                     }
@@ -109,13 +104,13 @@ public static class YamlParser
                     }
                     else if (current == YamlTokenType.KeySeparator)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                         current = YamlTokenType.Value;
                     }
                     else if (current is YamlTokenType.Whitespace or YamlTokenType.NewLine)
                     {
-                        results.Add(new(start, end - start, current));
+                        results.Add(CreateToken(start, end - start, current));
                         start = end;
                         current = keySeparatorSeen ? YamlTokenType.Value : YamlTokenType.Key;
                     }
@@ -125,27 +120,28 @@ public static class YamlParser
             }
         }
 
-        if (results.Last() is YamlToken lastToken && lastToken.Start + lastToken.Length != input.Length)
+        if (results.Last() is Token lastToken && lastToken.Start + lastToken.Length != input.Length)
         {
-            results.Add(new(start, end - start, current));
+            results.Add(CreateToken(start, end - start, current));
         }
 
         return results;
     }
 
-    public record YamlToken(int Start, int Length, YamlTokenType TokenType);
-
-    public enum YamlTokenType
+    private static Token CreateToken(int start, int length, YamlTokenType tokenType)
     {
-        Unknown,
-        Key,
-        KeySeparator,
-        Whitespace,
-        Value,
-        StartQuote,
-        QuotedString,
-        EndQuote,
-        NewLine,
-        ListBullet,
+        return tokenType switch
+        {
+            YamlTokenType.Key => new KeyToken(start, length),
+            YamlTokenType.KeySeparator => new KeySeparatorToken(start, length),
+            YamlTokenType.Whitespace => new WhitespaceToken(start, length),
+            YamlTokenType.Value => new ValueToken(start, length),
+            YamlTokenType.StartQuote => new StartQuoteToken(start, length),
+            YamlTokenType.QuotedString => new StringToken(start, length),
+            YamlTokenType.EndQuote => new EndQuoteToken(start, length),
+            YamlTokenType.NewLine => new NewLineToken(start, length),
+            YamlTokenType.ListBullet => new ListBulletToken(start, length),
+            _ => throw new ArgumentOutOfRangeException(nameof(tokenType), tokenType, "Invalid or unknown token type."),
+        };
     }
 }

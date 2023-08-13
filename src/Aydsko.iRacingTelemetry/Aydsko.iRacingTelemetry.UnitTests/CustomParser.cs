@@ -1,10 +1,11 @@
-﻿namespace Aydsko.iRacingTelemetry.UnitTests;
+﻿using Aydsko.iRacingTelemetry.Yaml;
+
+namespace Aydsko.iRacingTelemetry.UnitTests;
 
 public class CustomParser
 {
-
     [Test, TestCaseSource(nameof(TokenizeTestCases))]
-    public YamlParser.YamlToken[] TokenizeTest(string input)
+    public Token[] TokenizeTest(string input)
     {
         return YamlParser.Tokenize(input.AsMemory()).ToArray();
     }
@@ -13,121 +14,128 @@ public class CustomParser
     {
         yield return new("hello:world")
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 5, YamlParser.YamlTokenType.Key),
-                new(5, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(6, 5, YamlParser.YamlTokenType.Value),
+                new KeyToken(0, 5),
+                new KeySeparatorToken(5, 1),
+                new ValueToken(6, 5),
             }
         };
+
         yield return new("hello: world")
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 5, YamlParser.YamlTokenType.Key),
-                new(5, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(6, 1, YamlParser.YamlTokenType.Whitespace),
-                new(7, 5, YamlParser.YamlTokenType.Value),
+                new KeyToken(0, 5),
+                new KeySeparatorToken(5, 1),
+                new WhitespaceToken(6, 1),
+                new ValueToken(7, 5),
             }
         };
+
         yield return new("hello: 'world'")
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 5, YamlParser.YamlTokenType.Key),
-                new(5, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(6, 1, YamlParser.YamlTokenType.Whitespace),
-                new(7, 1, YamlParser.YamlTokenType.StartQuote),
-                new(8, 5, YamlParser.YamlTokenType.QuotedString),
-                new(13, 1, YamlParser.YamlTokenType.EndQuote),
+                new KeyToken(0, 5),
+                new KeySeparatorToken(5, 1),
+                new WhitespaceToken(6, 1),
+                new StartQuoteToken(7, 1),
+                new StringToken(8, 5),
+                new EndQuoteToken(13, 1),
             }
         };
+
         yield return new("hello: \"world\"")
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 5, YamlParser.YamlTokenType.Key),
-                new(5, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(6, 1, YamlParser.YamlTokenType.Whitespace),
-                new(7, 1, YamlParser.YamlTokenType.StartQuote),
-                new(8, 5, YamlParser.YamlTokenType.QuotedString),
-                new(13, 1, YamlParser.YamlTokenType.EndQuote),
+                new KeyToken(0, 5),
+                new KeySeparatorToken(5, 1),
+                new WhitespaceToken(6, 1),
+                new StartQuoteToken(7, 1),
+                new StringToken(8, 5),
+                new EndQuoteToken(13, 1),
             }
         };
+
         yield return new("""
                          container:
                           key1: value1
                           key2: value2
                          """)
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 9, YamlParser.YamlTokenType.Key),
-                new(9, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(10, 2, YamlParser.YamlTokenType.NewLine),
-                new(12, 1, YamlParser.YamlTokenType.Whitespace),
-                new(13, 4, YamlParser.YamlTokenType.Key),
-                new(17,1, YamlParser.YamlTokenType.KeySeparator),
-                new(18, 1, YamlParser.YamlTokenType.Whitespace),
-                new(19,6, YamlParser.YamlTokenType.Value),
-                new(25, 2, YamlParser.YamlTokenType.NewLine),
-                new(27, 1, YamlParser.YamlTokenType.Whitespace),
-                new(28, 4, YamlParser.YamlTokenType.Key),
-                new(32,1, YamlParser.YamlTokenType.KeySeparator),
-                new(33, 1, YamlParser.YamlTokenType.Whitespace),
-                new(34,6, YamlParser.YamlTokenType.Value),
+                new KeyToken(0, 9),
+                new KeySeparatorToken(9, 1),
+                new NewLineToken(10, 2),
+                new WhitespaceToken(12, 1),
+                new KeyToken(13, 4),
+                new KeySeparatorToken(17,1),
+                new WhitespaceToken(18, 1),
+                new ValueToken(19,6),
+                new NewLineToken(25, 2),
+                new WhitespaceToken(27, 1),
+                new KeyToken(28, 4),
+                new KeySeparatorToken(32,1),
+                new WhitespaceToken(33, 1),
+                new ValueToken(34,6),
             }
         };
+
         yield return new("""
                          container:
                           key1: 'value1'
                           key2: "value2"
                          """)
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 9, YamlParser.YamlTokenType.Key),
-                new(9, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(10, 2, YamlParser.YamlTokenType.NewLine),
-                new(12, 1, YamlParser.YamlTokenType.Whitespace),
-                new(13, 4, YamlParser.YamlTokenType.Key),
-                new(17,1, YamlParser.YamlTokenType.KeySeparator),
-                new(18, 1, YamlParser.YamlTokenType.Whitespace),
-                new(19, 1, YamlParser.YamlTokenType.StartQuote),
-                new(20, 6, YamlParser.YamlTokenType.QuotedString),
-                new(26, 1, YamlParser.YamlTokenType.EndQuote),
-                new(27, 2, YamlParser.YamlTokenType.NewLine),
-                new(29, 1, YamlParser.YamlTokenType.Whitespace),
-                new(30, 4, YamlParser.YamlTokenType.Key),
-                new(34,1, YamlParser.YamlTokenType.KeySeparator),
-                new(35, 1, YamlParser.YamlTokenType.Whitespace),
-                new(36, 1, YamlParser.YamlTokenType.StartQuote),
-                new(37, 6, YamlParser.YamlTokenType.QuotedString),
-                new(43, 1, YamlParser.YamlTokenType.EndQuote),
+                new KeyToken(0, 9),
+                new KeySeparatorToken(9, 1),
+                new NewLineToken(10, 2),
+                new WhitespaceToken(12, 1),
+                new KeyToken(13, 4),
+                new KeySeparatorToken(17,1),
+                new WhitespaceToken(18, 1),
+                new StartQuoteToken(19, 1),
+                new StringToken(20, 6),
+                new EndQuoteToken(26, 1),
+                new NewLineToken(27, 2),
+                new WhitespaceToken(29, 1),
+                new KeyToken(30, 4),
+                new KeySeparatorToken(34,1),
+                new WhitespaceToken(35, 1),
+                new StartQuoteToken(36, 1),
+                new StringToken(37, 6),
+                new EndQuoteToken(43, 1),
             }
         };
+
         yield return new("""
                          list:
                           - value1
                           - value2
                          """)
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 4, YamlParser.YamlTokenType.Key),
-                new(4, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(5, 2, YamlParser.YamlTokenType.NewLine),
-                new(7, 1, YamlParser.YamlTokenType.Whitespace),
-                new(8, 1, YamlParser.YamlTokenType.ListBullet),
-                new(9,1, YamlParser.YamlTokenType.Whitespace),
-                new(10,6,YamlParser.YamlTokenType.Value),
-                new(16,2, YamlParser.YamlTokenType.NewLine),
-                new(18,1, YamlParser.YamlTokenType.Whitespace),
-                new(19, 1, YamlParser.YamlTokenType.ListBullet),
-                new(20,1, YamlParser.YamlTokenType.Whitespace),
-                new(21,6,YamlParser.YamlTokenType.Value),
+                new KeyToken(0, 4),
+                new KeySeparatorToken(4, 1),
+                new NewLineToken(5, 2),
+                new WhitespaceToken(7, 1),
+                new ListBulletToken(8, 1),
+                new WhitespaceToken(9,1),
+                new ValueToken(10,6),
+                new NewLineToken(16,2),
+                new WhitespaceToken(18,1),
+                new ListBulletToken(19, 1),
+                new WhitespaceToken(20,1),
+                new ValueToken(21,6),
             }
         };
+
         yield return new("""
                          CarSetup:
                           UpdateCount: 8
@@ -149,98 +157,98 @@ public class CustomParser
                             FineBrakeBias: 0.0 (BB+/BB-)
                          """)
         {
-            ExpectedResult = new YamlParser.YamlToken[]
+            ExpectedResult = new Token[]
             {
-                new(0, 8, YamlParser.YamlTokenType.Key),
-                new(8, 1, YamlParser.YamlTokenType.KeySeparator),
-                new(9, 2, YamlParser.YamlTokenType.NewLine), // CarSetup:
-                new(11,1, YamlParser.YamlTokenType.Whitespace),
-                new(12,11, YamlParser.YamlTokenType.Key),
-                new(23,1, YamlParser.YamlTokenType.KeySeparator),
-                new(24,1, YamlParser.YamlTokenType.Whitespace),
-                new(25,1,YamlParser.YamlTokenType.Value),
-                new(26,2, YamlParser.YamlTokenType.NewLine), // UpdateCount: 8
-                new(28,1, YamlParser.YamlTokenType.Whitespace),
-                new(29,9, YamlParser.YamlTokenType.Key),
-                new(38,1,YamlParser.YamlTokenType.KeySeparator),
-                new(39,2, YamlParser.YamlTokenType.NewLine), // TiresAero:
-                new(41,2, YamlParser.YamlTokenType.Whitespace),
-                new(43,12, YamlParser.YamlTokenType.Key),
-                new(55,1,YamlParser.YamlTokenType.KeySeparator),
-                new(56,2, YamlParser.YamlTokenType.NewLine), // TireCompound:
-                new(58,3, YamlParser.YamlTokenType.Whitespace),
-                new(61,12, YamlParser.YamlTokenType.Key),
-                new(73,1,YamlParser.YamlTokenType.KeySeparator),
-                new(74,1,YamlParser.YamlTokenType.Whitespace),
-                new(75,4, YamlParser.YamlTokenType.Value),
-                new(79,2, YamlParser.YamlTokenType.NewLine), // TireCompound: Soft
-                new(81,2, YamlParser.YamlTokenType.Whitespace),
-                new(83,13, YamlParser.YamlTokenType.Key),
-                new(96,1,YamlParser.YamlTokenType.KeySeparator),
-                new(97,2, YamlParser.YamlTokenType.NewLine), // LeftFrontTire:
-                new(99,3,YamlParser.YamlTokenType.Whitespace),
-                new(102,16, YamlParser.YamlTokenType.Key),
-                new(118,1,YamlParser.YamlTokenType.KeySeparator),
-                new(119,1, YamlParser.YamlTokenType.Whitespace),
-                new(120,9, YamlParser.YamlTokenType.Value),
-                new(129,2,YamlParser.YamlTokenType.NewLine), // StartingPressure: 151.7 kPa
-                new(131,3,YamlParser.YamlTokenType.Whitespace),
-                new(134,15, YamlParser.YamlTokenType.Key),
-                new(149,1,YamlParser.YamlTokenType.KeySeparator),
-                new(150,1, YamlParser.YamlTokenType.Whitespace),
-                new(151,8, YamlParser.YamlTokenType.Value),
-                new(159,2,YamlParser.YamlTokenType.NewLine), // LastHotPressure: 22.8 psi
-                new(161,3,YamlParser.YamlTokenType.Whitespace),
-                new(164,12, YamlParser.YamlTokenType.Key),
-                new(176,1,YamlParser.YamlTokenType.KeySeparator),
-                new(177,1, YamlParser.YamlTokenType.Whitespace),
-                new(178,16, YamlParser.YamlTokenType.Value),
-                new(194,2,YamlParser.YamlTokenType.NewLine), // LastTempsOMI: 115C, 121C, 127C
-                new(196,3,YamlParser.YamlTokenType.Whitespace),
-                new(199,14, YamlParser.YamlTokenType.Key),
-                new(213,1,YamlParser.YamlTokenType.KeySeparator),
-                new(214,1, YamlParser.YamlTokenType.Whitespace),
-                new(215,13, YamlParser.YamlTokenType.Value),
-                new(228,2,YamlParser.YamlTokenType.NewLine), // TreadRemaining: 91%, 86%, 86%
-                new(230,1, YamlParser.YamlTokenType.Whitespace),
-                new(231,7, YamlParser.YamlTokenType.Key),
-                new(238,1,YamlParser.YamlTokenType.KeySeparator),
-                new(239,2, YamlParser.YamlTokenType.NewLine), // Chassis:
-                new(241,2, YamlParser.YamlTokenType.Whitespace),
-                new(243,9, YamlParser.YamlTokenType.Key),
-                new(252,1,YamlParser.YamlTokenType.KeySeparator),
-                new(253,2, YamlParser.YamlTokenType.NewLine), // LeftFront:
-                new(255,3, YamlParser.YamlTokenType.Whitespace),
-                new(258,12, YamlParser.YamlTokenType.Key),
-                new(270,1,YamlParser.YamlTokenType.KeySeparator),
-                new(271,1,YamlParser.YamlTokenType.Whitespace),
-                new(272,6, YamlParser.YamlTokenType.Value),
-                new(278,2, YamlParser.YamlTokenType.NewLine), // CornerWeight: 1964 N
-                new(280,3, YamlParser.YamlTokenType.Whitespace),
-                new(283,6, YamlParser.YamlTokenType.Key),
-                new(289,1,YamlParser.YamlTokenType.KeySeparator),
-                new(290,1,YamlParser.YamlTokenType.Whitespace),
-                new(291,9, YamlParser.YamlTokenType.Value),
-                new(300,2, YamlParser.YamlTokenType.NewLine), // Camber: -3.48 deg
-                new(302,1, YamlParser.YamlTokenType.Whitespace),
-                new(303,10, YamlParser.YamlTokenType.Key),
-                new(313,1,YamlParser.YamlTokenType.KeySeparator),
-                new(314,2, YamlParser.YamlTokenType.NewLine), // DriveBrake:
-                new(316,2, YamlParser.YamlTokenType.Whitespace),
-                new(318,17, YamlParser.YamlTokenType.Key),
-                new(335,1,YamlParser.YamlTokenType.KeySeparator),
-                new(336,2, YamlParser.YamlTokenType.NewLine), // BrakeSystemConfig:
-                new(338,3, YamlParser.YamlTokenType.Whitespace),
-                new(341,13, YamlParser.YamlTokenType.Key),
-                new(354,1,YamlParser.YamlTokenType.KeySeparator),
-                new(355,1,YamlParser.YamlTokenType.Whitespace),
-                new(356,12, YamlParser.YamlTokenType.Value),
-                new(368,2, YamlParser.YamlTokenType.NewLine), // BaseBrakeBias: 57.0% (BBAL)
-                new(370,3, YamlParser.YamlTokenType.Whitespace),
-                new(373,13, YamlParser.YamlTokenType.Key),
-                new(386,1,YamlParser.YamlTokenType.KeySeparator),
-                new(387,1,YamlParser.YamlTokenType.Whitespace),
-                new(388,13, YamlParser.YamlTokenType.Value), // FineBrakeBias: 0.0 (BB+/BB-)
+                new KeyToken(0, 8),
+                new KeySeparatorToken(8, 1),
+                new NewLineToken(9, 2), // CarSetup:
+                new WhitespaceToken(11,1),
+                new KeyToken(12,11),
+                new KeySeparatorToken(23,1),
+                new WhitespaceToken(24,1),
+                new ValueToken(25,1),
+                new NewLineToken(26,2), // UpdateCount: 8
+                new WhitespaceToken(28,1),
+                new KeyToken(29,9),
+                new KeySeparatorToken(38,1),
+                new NewLineToken(39,2), // TiresAero:
+                new WhitespaceToken(41,2),
+                new KeyToken(43,12),
+                new KeySeparatorToken(55,1),
+                new NewLineToken(56,2), // TireCompound:
+                new WhitespaceToken(58,3),
+                new KeyToken(61,12),
+                new KeySeparatorToken(73,1),
+                new WhitespaceToken(74,1),
+                new ValueToken(75,4),
+                new NewLineToken(79,2), // TireCompound: Soft
+                new WhitespaceToken(81,2),
+                new KeyToken(83,13),
+                new KeySeparatorToken(96,1),
+                new NewLineToken(97,2), // LeftFrontTire:
+                new WhitespaceToken(99,3),
+                new KeyToken(102,16),
+                new KeySeparatorToken(118,1),
+                new WhitespaceToken(119,1),
+                new ValueToken(120,9),
+                new NewLineToken(129,2), // StartingPressure: 151.7 kPa
+                new WhitespaceToken(131,3),
+                new KeyToken(134,15),
+                new KeySeparatorToken(149,1),
+                new WhitespaceToken(150,1),
+                new ValueToken(151,8),
+                new NewLineToken(159,2), // LastHotPressure: 22.8 psi
+                new WhitespaceToken(161,3),
+                new KeyToken(164,12),
+                new KeySeparatorToken(176,1),
+                new WhitespaceToken(177,1),
+                new ValueToken(178,16),
+                new NewLineToken(194,2), // LastTempsOMI: 115C, 121C, 127C
+                new WhitespaceToken(196,3),
+                new KeyToken(199,14),
+                new KeySeparatorToken(213,1),
+                new WhitespaceToken(214,1),
+                new ValueToken(215,13),
+                new NewLineToken(228,2), // TreadRemaining: 91%, 86%, 86%
+                new WhitespaceToken(230,1),
+                new KeyToken(231,7),
+                new KeySeparatorToken(238,1),
+                new NewLineToken(239,2), // Chassis:
+                new WhitespaceToken(241,2),
+                new KeyToken(243,9),
+                new KeySeparatorToken(252,1),
+                new NewLineToken(253,2), // LeftFront:
+                new WhitespaceToken(255,3),
+                new KeyToken(258,12),
+                new KeySeparatorToken(270,1),
+                new WhitespaceToken(271,1),
+                new ValueToken(272,6),
+                new NewLineToken(278,2), // CornerWeight: 1964 N
+                new WhitespaceToken(280,3),
+                new KeyToken(283,6),
+                new KeySeparatorToken(289,1),
+                new WhitespaceToken(290,1),
+                new ValueToken(291,9),
+                new NewLineToken(300,2), // Camber: -3.48 deg
+                new WhitespaceToken(302,1),
+                new KeyToken(303,10),
+                new KeySeparatorToken(313,1),
+                new NewLineToken(314,2), // DriveBrake:
+                new WhitespaceToken(316,2),
+                new KeyToken(318,17),
+                new KeySeparatorToken(335,1),
+                new NewLineToken(336,2), // BrakeSystemConfig:
+                new WhitespaceToken(338,3),
+                new KeyToken(341,13),
+                new KeySeparatorToken(354,1),
+                new WhitespaceToken(355,1),
+                new ValueToken(356,12),
+                new NewLineToken(368,2), // BaseBrakeBias: 57.0% (BBAL)
+                new WhitespaceToken(370,3),
+                new KeyToken(373,13),
+                new KeySeparatorToken(386,1),
+                new WhitespaceToken(387,1),
+                new ValueToken(388,13), // FineBrakeBias: 0.0 (BB+/BB-)
             }
         };
     }
