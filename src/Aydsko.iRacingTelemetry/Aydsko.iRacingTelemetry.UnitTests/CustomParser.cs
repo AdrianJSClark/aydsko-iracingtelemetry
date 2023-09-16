@@ -7,7 +7,7 @@ public class CustomParser
     [Test, TestCaseSource(nameof(TokenizeTestCases))]
     public Token[] TokenizeTest(string input)
     {
-        return YamlParser.Tokenize(input.AsMemory()).ToArray();
+        return YamlParser.TokenizeStateBased(input.AsMemory()).ToArray();
     }
 
     private static IEnumerable<TestCaseData> TokenizeTestCases()

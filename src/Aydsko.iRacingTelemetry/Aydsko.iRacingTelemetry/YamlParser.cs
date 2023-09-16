@@ -6,6 +6,51 @@ public static class YamlParser
 {
     public static IEnumerable<Token> Tokenize(ReadOnlyMemory<char> input)
     {
+        var reader = new InputReader(input);
+
+        while (reader.HasChars())
+        {
+            switch (reader.Peek())
+            {
+                case ':':
+
+                    break;
+                default:
+                    _ = reader.Forward();
+                    break;
+            }
+        }
+    }
+
+    private class InputReader(ReadOnlyMemory<char> input)
+    {
+        private int currentIndex;
+
+        public char Peek()
+        {
+            return Peek(1)[0];
+        }
+
+        public ReadOnlySpan<char> Peek(int charCount = 1)
+        {
+            return input.Slice(currentIndex, charCount).Span;
+        }
+
+        public ReadOnlySpan<char> Forward(int charCount = 1)
+        {
+            var charsToReturn = input.Slice(currentIndex, charCount).Span;
+            currentIndex += charCount;
+            return charsToReturn;
+        }
+
+        public bool HasChars()
+        {
+            return currentIndex < input.Length;
+        }
+    }
+
+    public static IEnumerable<Token> TokenizeStateBased(ReadOnlyMemory<char> input)
+    {
         var results = new List<Token>();
         var start = 0;
         var end = 0;
