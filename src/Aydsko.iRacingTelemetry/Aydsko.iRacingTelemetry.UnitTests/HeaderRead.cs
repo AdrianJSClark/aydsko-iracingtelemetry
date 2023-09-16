@@ -22,7 +22,7 @@ public class HeaderRead
     public Task SessionInfoYamlExists()
     {
         Assert.That(_diskClient.SessionInfoYaml, Is.Not.Null.Or.Empty);
-        return Task.CompletedTask;
+        return Verify(_diskClient.SessionInfoYaml);
     }
 
     [OneTimeTearDown]
