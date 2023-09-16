@@ -25,7 +25,7 @@ public enum GlobalState : long
     // Drivers black flags
     Black = 0x00010000,
     Disqualify = 0x00020000,
-    Servicible = 0x00040000, // Car is allowed service (not a flag)
+    Serviceable = 0x00040000, // Car is allowed service (not a flag)
     Furled = 0x00080000,
     Repair = 0x00100000,
 
