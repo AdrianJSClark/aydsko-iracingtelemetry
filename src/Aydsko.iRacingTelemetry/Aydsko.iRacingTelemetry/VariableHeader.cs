@@ -3,7 +3,7 @@
 namespace Aydsko.iRacingTelemetry;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct VariableHeader
+public struct VariableHeader
 {
     /// <summary>Type of data in this variable.</summary>
     /// <seealso cref="VariableType" />
