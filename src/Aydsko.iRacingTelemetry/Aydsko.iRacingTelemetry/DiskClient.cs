@@ -84,6 +84,24 @@ public class DiskClient : IDisposable
         }
     }
 
+    public IEnumerable<VariableHeader> GetHeaderVariables() => _headerVariables ?? Enumerable.Empty<VariableHeader>();
+
+    public async IAsyncEnumerable<Memory<byte>> ReadBufferLinesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
+    {
+        if (_ibtFile is null)
+        {
+            throw new InvalidOperationException("Unexpected null value for the \".ibt\" file.");
+        }
+
+        _ = _ibtFile.Seek(_header.VariableBuffers[0].BufferOffset, SeekOrigin.Begin);
+
+        Memory<byte> valueBuffer = new byte[_header.BufferLengthBytes];
+        while ((await _ibtFile.ReadAsync(valueBuffer, cancellationToken).ConfigureAwait(false)) == _header.BufferLengthBytes)
+        {
+            yield return valueBuffer;
+        }
+    }
+
     public async IAsyncEnumerable<Variable[]> ReadVariableLinesAsync([EnumeratorCancellation] CancellationToken cancellationToken = default)
     {
         if (_ibtFile is null)
