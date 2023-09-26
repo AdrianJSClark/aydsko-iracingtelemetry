@@ -34,7 +34,7 @@
   </ItemGroup>
 
   <ItemGroup>
-    <ProjectReference Include="../Aysdko.iRacingTelemetry.Generators/Aysdko.iRacingTelemetry.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\Aysdko.iRacingTelemetry.Generators\Aydsko.iRacingTelemetry.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
