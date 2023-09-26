@@ -1,4 +1,4 @@
-<Project Sdk="Microsoft.NET.Sdk">
+﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <PropertyGroup>
     <TargetFramework>net6.0</TargetFramework>
@@ -26,10 +26,12 @@
 
   <ItemGroup>
     <ProjectReference Include="..\Aydsko.iRacingTelemetry\Aydsko.iRacingTelemetry.csproj" />
-  </ItemGroup>
-
-  <ItemGroup>
-    <ProjectReference Include="../Aysdko.iRacingTelemetry.Generators/Aysdko.iRacingTelemetry.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
+    <ProjectReference Include="..\Aydsko.iRacingTelemetry.Generators\Aydsko.iRacingTelemetry.Generators.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="false" />
+    <ProjectReference Include="..\Aydsko.iRacingTelemetry.Generators.Attributes\Aydsko.iRacingTelemetry.Generators.Attributes.csproj"
+                      OutputItemType="Analyzer"
+                      ReferenceOutputAssembly="true" />
   </ItemGroup>
 
   <ItemGroup>
