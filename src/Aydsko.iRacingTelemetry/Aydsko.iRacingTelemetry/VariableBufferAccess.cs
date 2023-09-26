@@ -76,7 +76,7 @@ public static class VariableBufferAccess
         // special handling for TimeSpans -> iracing gives times in seconds
         if (targetType.Equals(typeof(TimeSpan)))
         {
-            return (T)(object)TimeSpan.FromSeconds(Convert.ToInt64(value, CultureInfo.InvariantCulture));
+            return (T)(object)TimeSpan.FromSeconds(Convert.ToDouble(value, CultureInfo.InvariantCulture));
         }
         
         return (T)Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
