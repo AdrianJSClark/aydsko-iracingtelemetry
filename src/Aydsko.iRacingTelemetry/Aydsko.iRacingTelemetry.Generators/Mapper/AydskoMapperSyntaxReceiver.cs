@@ -11,22 +11,9 @@ internal sealed class AydskoMapperSyntaxReceiver : ISyntaxContextReceiver
 
     public void OnVisitSyntaxNode(GeneratorSyntaxContext context)
     {
-        if (context.Node is ClassDeclarationSyntax cds == false)
-        {
-            return;
-        }
-
-        var declaredClassSymbol = context.SemanticModel.GetDeclaredSymbol(cds);
-        if (declaredClassSymbol is null)
-        {
-            return;
-        }
-
-        // check if data package attribute was declared
-        var dataPackageAttribute = declaredClassSymbol
-            .GetAttributes()
-            .FirstOrDefault(x => x.AttributeClass?.Name == nameof(AydskoDataAttribute));
-        if (dataPackageAttribute is null)
+        if (context.Node is not ClassDeclarationSyntax cds
+            || context.SemanticModel.GetDeclaredSymbol(cds) is not ISymbol declaredClassSymbol
+            || declaredClassSymbol.GetAttributes().FirstOrDefault(x => x.AttributeClass?.Name == "AydskoDataAttribute") is not AttributeData dataPackageAttribute)
         {
             return;
         }
@@ -44,8 +31,8 @@ internal sealed class AydskoMapperSyntaxReceiver : ISyntaxContextReceiver
         {
             // Only map properties with mapping attribute
             mapProperties = mapProperties.Where(x => x.property.GetAttributes()
-                                                               .Any(y => y.AttributeClass?.Name == nameof(AydskoMapAttribute)))
-                                         .Select(x => (name: GetMappedName(x.property.GetAttributes().First(y => y.AttributeClass?.Name == nameof(AydskoMapAttribute))) ?? x.name, x.property));
+                                                               .Any(y => y.AttributeClass?.Name == "AydskoMapAttribute"))
+                                         .Select(x => (name: GetMappedName(x.property.GetAttributes().First(y => y.AttributeClass?.Name == "AydskoMapAttribute")) ?? x.name, x.property));
         }
 
         var targetNameSpace = GetFullNamespace(declaredClassSymbol.ContainingNamespace);

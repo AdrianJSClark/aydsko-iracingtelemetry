@@ -1,4 +1,4 @@
-﻿using Aydsko.iRacingTelemetry.Generators.Mapper;
+﻿using Aydsko.iRacingTelemetry.Generators.Attributes;
 
 namespace Aydsko.iRacingTelemetry.UnitTests;
 public sealed class MapperTests

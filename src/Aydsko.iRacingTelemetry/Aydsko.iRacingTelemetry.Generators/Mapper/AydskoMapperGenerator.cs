@@ -43,11 +43,10 @@ internal sealed class AydskoMapperGenerator : ISourceGenerator
             // Changes will be overwritten
             using System;
             using Aydsko.iRacingTelemetry;
-            using Aydsko.iRacingTelemetry.Generators.Mapper;
 
             namespace {{mapperContext.TargetNamespace}};
 
-            public sealed class {{mapperClassName}} : {{nameof(IAydskoMapper<object>)}}<{{mapperContext.TargetClassName}}>
+            public sealed class {{mapperClassName}}
             {
             """);
 
@@ -71,7 +70,7 @@ internal sealed class AydskoMapperGenerator : ISourceGenerator
         _ = sourceBuilder.AppendLine();
 
         // Write map method
-        _ = sourceBuilder.AppendLine($"    public {mapperContext.TargetClassName} {nameof(IAydskoMapper<object>.MapFromBuffer)}(Span<byte> buffer)");
+        _ = sourceBuilder.AppendLine($"    public {mapperContext.TargetClassName} MapFromBuffer(Span<byte> buffer)");
         _ = sourceBuilder.AppendLine("    {");
         _ = sourceBuilder.AppendLine($"        var target = new {mapperContext.TargetClassName}();");
 

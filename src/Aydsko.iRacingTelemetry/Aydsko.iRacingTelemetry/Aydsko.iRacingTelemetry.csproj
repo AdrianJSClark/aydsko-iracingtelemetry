@@ -26,8 +26,4 @@
     <InternalsVisibleTo Include="Aydsko.iRacingTelemetry.UnitTests" />
   </ItemGroup>
 
-  <ItemGroup>
-    <ProjectReference Include="..\Aysdko.iRacingTelemetry.Generators\Aydsko.iRacingTelemetry.Generators.csproj" OutputItemType="Analyzer" ReferenceOutputAssembly="true" />
-  </ItemGroup>
-
 </Project>
