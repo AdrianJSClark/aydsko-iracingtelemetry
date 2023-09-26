@@ -3,7 +3,7 @@
 namespace Aydsko.iRacingTelemetry;
 
 [StructLayout(LayoutKind.Sequential)]
-internal struct VariableHeader
+public struct VariableHeader
 {
     /// <summary>Type of data in this variable.</summary>
     /// <seealso cref="VariableType" />
@@ -24,14 +24,14 @@ internal struct VariableHeader
     public char[] Padding;
 
     /// <summary>Name of the variable.</summary>
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
-    public char[] Name;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = IrSdkConstants.MaxString)]
+    public string Name;
 
     /// <summary>A description for the variable.</summary>
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxDesc)]
-    public char[] Description;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = IrSdkConstants.MaxDesc)]
+    public string Description;
 
     /// <summary>Units for the variable.</summary>
-    [MarshalAs(UnmanagedType.ByValArray, SizeConst = IrSdkConstants.MaxString)]
-    public char[] Unit;
+    [MarshalAs(UnmanagedType.ByValTStr, SizeConst = IrSdkConstants.MaxString)]
+    public string Unit;
 }
