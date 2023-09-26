@@ -103,6 +103,6 @@ internal sealed class AysdkoMapperGenerator : ISourceGenerator
         // end of class
         sourceBuilder.AppendLine("}");
 
-        context.AddSource($"{mapperClassName}.generated", sourceBuilder.ToString());
+        context.AddSource($"{mapperClassName}.g.cs", sourceBuilder.ToString());
     }
 }
