@@ -45,11 +45,10 @@ public static class VariableBufferAccess
     public static T GetTypedValue<T>(Span<byte> buffer, VariableHeader header)
     {
         var value = GetValue(buffer, header);
-        var sourceType = GetDataType((VariableType)header.Type);
-        return SafeConvertType<T>(value, sourceType);
+        return SafeConvertType<T>(value);
     }
 
-    private static Type GetDataType(VariableType variableType) => variableType switch
+    public static Type GetDataType(VariableType variableType) => variableType switch
     {
         VariableType.Char => typeof(char),
         VariableType.Bool => typeof(bool),
@@ -60,9 +59,26 @@ public static class VariableBufferAccess
         _ => typeof(object),
     };
 
-    private static T SafeConvertType<T>(object value, Type sourceType)
+    public static T SafeConvertType<T>(object value)
     {
-        // TODO: Implement safe type conversion between buffer data type and target type
-        throw new NotImplementedException();
+        var targetType = typeof(T);
+        
+        // get underlying type in case T is nullable
+        targetType = Nullable.GetUnderlyingType(targetType) ?? targetType;
+        
+        // special handling for enums because Convert.ChangeType throws on trying to convert to enum type
+        // but int type and cast to enum works
+        if (targetType.IsEnum)
+        {
+            return (T)Enum.ToObject(targetType, Convert.ToInt32(value, CultureInfo.InvariantCulture));
+        }
+        
+        // special handling for TimeSpans -> iracing gives times in seconds
+        if (targetType.Equals(typeof(TimeSpan)))
+        {
+            return (T)(object)TimeSpan.FromSeconds(Convert.ToInt64(value, CultureInfo.InvariantCulture));
+        }
+        
+        return (T)Convert.ChangeType(value, targetType, CultureInfo.InvariantCulture);
     }
 }
