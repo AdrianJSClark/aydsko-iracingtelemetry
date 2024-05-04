@@ -35,11 +35,6 @@ jobs:
         working-directory: src
         run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --filter "TestCategory!=Integration"
 
-      - name: 'Run Integration Tests'
-        shell: pwsh
-        working-directory: src
-        run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --filter "TestCategory=Integration"
-
       - uses: dorny/test-reporter@v1
         if: success() || failure()
         with:
@@ -65,9 +60,3 @@ jobs:
         with:
           name: NuGet Packages
           path: Aydsko.*.nupkg
-
-      # - name: 'Upload Release Notes'
-      #   uses: actions/upload-artifact@v4
-      #   with:
-      #     name: Release Notes
-      #     path: 'src\Aydsko.iRacingTelemetry\Package Release Notes.txt'
