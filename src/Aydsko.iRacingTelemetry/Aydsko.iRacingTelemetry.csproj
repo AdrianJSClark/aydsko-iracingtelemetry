@@ -7,6 +7,8 @@
   </PropertyGroup>
 
   <PropertyGroup>
+    <GeneratePackageOnBuild>true</GeneratePackageOnBuild>
+
     <!-- Publish the repository URL in the built .nupkg (in the NuSpec <Repository> element) -->
     <PublishRepositoryUrl>true</PublishRepositoryUrl>
 
@@ -24,6 +26,7 @@
 
   <ItemGroup>
     <InternalsVisibleTo Include="Aydsko.iRacingTelemetry.UnitTests" />
+    <InternalsVisibleTo Include="LINQPadQuery" />
   </ItemGroup>
 
 </Project>
