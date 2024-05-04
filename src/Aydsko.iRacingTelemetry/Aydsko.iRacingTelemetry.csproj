@@ -29,4 +29,16 @@
     <InternalsVisibleTo Include="LINQPadQuery" />
   </ItemGroup>
 
+  <PropertyGroup Condition="'$(CI)' == 'true' And '$(GITHUB_HEAD_REF)' != ''">
+    <MinVerDefaultPreReleasePhase>$(GITHUB_HEAD_REF)</MinVerDefaultPreReleasePhase>
+  </PropertyGroup>
+
+  <Target Name="OutputVersionForCI" AfterTargets="MinVer" Condition="'$(TF_BUILD)' == 'true' Or '$(CI)' == 'true'">
+    <PropertyGroup>
+      <IsPreReleaseBuild>true</IsPreReleaseBuild>
+      <IsPreReleaseBuild Condition="'$(MinVerPreRelease)' == ''">false</IsPreReleaseBuild>
+    </PropertyGroup>
+    <Exec Command="echo &quot;BUILDVERSION=$(MinVerVersion)&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;" IgnoreExitCode="true" />
+    <Exec Command="echo &quot;PRERELEASE=$(IsPreReleaseBuild)&quot; &gt;&gt; &quot;$GITHUB_OUTPUT&quot;" IgnoreExitCode="true" />
+  </Target>
 </Project>
