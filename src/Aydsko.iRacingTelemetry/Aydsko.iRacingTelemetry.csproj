@@ -29,6 +29,13 @@
     <InternalsVisibleTo Include="LINQPadQuery" />
   </ItemGroup>
 
+  <ItemGroup>
+    <PackageReference Include="MinVer" Version="5.0.0">
+      <PrivateAssets>all</PrivateAssets>
+      <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+    </PackageReference>
+  </ItemGroup>
+
   <PropertyGroup Condition="'$(CI)' == 'true' And '$(GITHUB_HEAD_REF)' != ''">
     <MinVerDefaultPreReleasePhase>$(GITHUB_HEAD_REF)</MinVerDefaultPreReleasePhase>
   </PropertyGroup>
