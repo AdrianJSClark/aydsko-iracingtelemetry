@@ -1,0 +1,73 @@
+name: Build Aydsko iRacing Telemetry
+
+on:
+  workflow_call:
+
+jobs:
+  build:
+    runs-on: windows-latest
+
+    env:
+      DOTNET_NOLOGO: true
+      DOTNET_SKIP_FIRST_TIME_EXPERIENCE: true # Avoid pre-populating the NuGet package cache
+
+    steps:
+
+      - name: 'Checkout Code'
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0 # Required for MinVer to work properly
+
+      - name: 'Setup .NET SDK'
+        uses: actions/setup-dotnet@v4
+        with:
+          dotnet-version: '8.x'
+
+      # Build Solution and Run Tests
+      - name: 'Build Solution'
+        id: build-solution
+        shell: pwsh
+        working-directory: src
+        run: dotnet build -c Release
+
+      - name: 'Run Unit Tests'
+        shell: pwsh
+        working-directory: src
+        run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --filter "TestCategory!=Integration"
+
+      - name: 'Run Integration Tests'
+        shell: pwsh
+        working-directory: src
+        run: dotnet test -c Release --no-build --collect:"XPlat Code Coverage" --filter "TestCategory=Integration"
+
+      - uses: dorny/test-reporter@v1
+        if: success() || failure()
+        with:
+          name: '.NET Tests'
+          path: '**/*.trx'
+          reporter: 'dotnet-trx'
+
+      - name: 'Copy Code Coverage to Root'
+        shell: pwsh
+        run: |
+          mkdir coverage
+          cd coverage
+          Get-ChildItem -Path ..\src\* -Recurse -Include coverage.cobertura.xml | Copy-Item -Container:$false
+          pwd
+          dir
+
+      - name: 'Copy Package to Root'
+        shell: pwsh
+        run: Get-ChildItem -Path src\*\bin\Release\* -Recurse -Include *.nupkg | Copy-Item -Container:$false
+
+      - name: 'Upload Artifacts'
+        uses: actions/upload-artifact@v4
+        with:
+          name: NuGet Packages
+          path: Aydsko.*.nupkg
+
+      # - name: 'Upload Release Notes'
+      #   uses: actions/upload-artifact@v4
+      #   with:
+      #     name: Release Notes
+      #     path: 'src\Aydsko.iRacingTelemetry\Package Release Notes.txt'

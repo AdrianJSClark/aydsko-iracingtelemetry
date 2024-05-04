@@ -1,4 +1,4 @@
-﻿using Aysdko.iRacingTelemetry.Generators.Mapper;
+﻿using Aydsko.iRacingTelemetry.Generators.Attributes;
 
 namespace Aydsko.iRacingTelemetry.UnitTests;
 public sealed class MapperTests
@@ -15,7 +15,7 @@ public sealed class MapperTests
     [Test]
     public async Task MapperShouldFillTestClass()
     {
-        var mapper = new MapperTestClass_AysdkoMapper(_diskClient.GetHeaderVariables());
+        var mapper = new MapperTestClassAydskoMapper(_diskClient.GetHeaderVariables());
         var buffer = await _diskClient.ReadBufferLinesAsync().FirstAsync().ConfigureAwait(false);
         var data = mapper.MapFromBuffer(buffer.Span);
         Assert.Multiple(() =>
@@ -26,7 +26,7 @@ public sealed class MapperTests
     }
 }
 
-[AysdkoData(autoMapAllProperties: true)]
+[AydskoData(autoMapAllProperties: true)]
 public class MapperTestClass
 {
     public TimeSpan SessionTime { get; set; }

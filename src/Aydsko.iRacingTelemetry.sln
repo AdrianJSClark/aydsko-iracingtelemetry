@@ -7,13 +7,24 @@ Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aydsko.iRacingTelemetry", "
 EndProject
 Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "Solution Items", "Solution Items", "{07F9401D-5A0E-415C-8787-4FD4E93D986B}"
 	ProjectSection(SolutionItems) = preProject
-		..\.editorconfig = ..\.editorconfig
-		..\Directory.Build.props = ..\Directory.Build.props
+		.editorconfig = .editorconfig
+		Directory.Build.props = Directory.Build.props
 	EndProjectSection
 EndProject
 Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aydsko.iRacingTelemetry.UnitTests", "Aydsko.iRacingTelemetry.UnitTests\Aydsko.iRacingTelemetry.UnitTests.csproj", "{DB276308-5C05-4EEC-9914-B11AD3F37DEA}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "Aysdko.iRacingTelemetry.Generators", "Aysdko.iRacingTelemetry.Generators\Aysdko.iRacingTelemetry.Generators.csproj", "{1BDF487C-4E58-424A-8BBE-0C2A74BE0AA6}"
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aydsko.iRacingTelemetry.Generators.Attributes", "Aydsko.iRacingTelemetry.Generators.Attributes\Aydsko.iRacingTelemetry.Generators.Attributes.csproj", "{3D291C41-B5E5-4AC4-B5E6-5D270D82C026}"
+EndProject
+Project("{9A19103F-16F7-4668-BE54-9A1E7A4F7556}") = "Aydsko.iRacingTelemetry.Generators", "Aydsko.iRacingTelemetry.Generators\Aydsko.iRacingTelemetry.Generators.csproj", "{06FE08A2-9B84-4569-BADD-0D0FDB561BD0}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = ".github", ".github", "{D07FEB52-98FB-4529-8AB3-C3DC968E6A84}"
+EndProject
+Project("{2150E333-8FDC-42A3-9474-1A3956D46DE8}") = "workflows", "workflows", "{2D93EB82-05FC-41EA-8C79-EC187CDFE809}"
+	ProjectSection(SolutionItems) = preProject
+		..\.github\workflows\ci.yml = ..\.github\workflows\ci.yml
+		..\.github\workflows\pr.yml = ..\.github\workflows\pr.yml
+		..\.github\workflows\_build.yml = ..\.github\workflows\_build.yml
+	EndProjectSection
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
@@ -29,13 +40,20 @@ Global
 		{DB276308-5C05-4EEC-9914-B11AD3F37DEA}.Debug|Any CPU.Build.0 = Debug|Any CPU
 		{DB276308-5C05-4EEC-9914-B11AD3F37DEA}.Release|Any CPU.ActiveCfg = Release|Any CPU
 		{DB276308-5C05-4EEC-9914-B11AD3F37DEA}.Release|Any CPU.Build.0 = Release|Any CPU
-		{1BDF487C-4E58-424A-8BBE-0C2A74BE0AA6}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
-		{1BDF487C-4E58-424A-8BBE-0C2A74BE0AA6}.Debug|Any CPU.Build.0 = Debug|Any CPU
-		{1BDF487C-4E58-424A-8BBE-0C2A74BE0AA6}.Release|Any CPU.ActiveCfg = Release|Any CPU
-		{1BDF487C-4E58-424A-8BBE-0C2A74BE0AA6}.Release|Any CPU.Build.0 = Release|Any CPU
+		{3D291C41-B5E5-4AC4-B5E6-5D270D82C026}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{3D291C41-B5E5-4AC4-B5E6-5D270D82C026}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{3D291C41-B5E5-4AC4-B5E6-5D270D82C026}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{3D291C41-B5E5-4AC4-B5E6-5D270D82C026}.Release|Any CPU.Build.0 = Release|Any CPU
+		{06FE08A2-9B84-4569-BADD-0D0FDB561BD0}.Debug|Any CPU.ActiveCfg = Debug|Any CPU
+		{06FE08A2-9B84-4569-BADD-0D0FDB561BD0}.Debug|Any CPU.Build.0 = Debug|Any CPU
+		{06FE08A2-9B84-4569-BADD-0D0FDB561BD0}.Release|Any CPU.ActiveCfg = Release|Any CPU
+		{06FE08A2-9B84-4569-BADD-0D0FDB561BD0}.Release|Any CPU.Build.0 = Release|Any CPU
 	EndGlobalSection
 	GlobalSection(SolutionProperties) = preSolution
 		HideSolutionNode = FALSE
+	EndGlobalSection
+	GlobalSection(NestedProjects) = preSolution
+		{2D93EB82-05FC-41EA-8C79-EC187CDFE809} = {D07FEB52-98FB-4529-8AB3-C3DC968E6A84}
 	EndGlobalSection
 	GlobalSection(ExtensibilityGlobals) = postSolution
 		SolutionGuid = {6D6BF664-AF49-46A7-95F9-527D66AACB0A}

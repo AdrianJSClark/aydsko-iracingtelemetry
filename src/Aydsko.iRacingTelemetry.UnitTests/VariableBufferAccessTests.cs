@@ -1,4 +1,5 @@
 ﻿namespace Aydsko.iRacingTelemetry.UnitTests;
+
 public sealed class VariableBufferAccessTests
 {
     private DiskClient _diskClient = default!;
@@ -35,7 +36,7 @@ public sealed class VariableBufferAccessTests
     [TestCase(1, (float)1.0)]
     [TestCase("1", (float)1.0)]
     [TestCase(1, (TrackLocation)1)]
-    public void SafeConvertTypeShouldReturnNullabeValue<T>(object value, T expected) where T : struct
+    public void SafeConvertTypeShouldReturnNullableValue<T>(object value, T expected) where T : struct
     {
         var typedValue = VariableBufferAccess.SafeConvertType<T?>(value);
         Assert.That(typedValue, Is.EqualTo(expected));
